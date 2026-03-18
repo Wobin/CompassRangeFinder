@@ -8,6 +8,6 @@ return {
 			mod_localization = "Compass Range Finder/scripts/mods/Compass Range Finder/Compass Range Finder_localization",
 		})
 	end,
-	version = "1.0.0",
+	version = "1.1.0",
 	packages = {},
 }
