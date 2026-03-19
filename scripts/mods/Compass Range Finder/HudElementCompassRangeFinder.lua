@@ -68,9 +68,11 @@ HudElementCompassRangeFinder.draw = function(self, dt, t, ui_renderer, render_se
 	local resolution_height = (resolution_lookup and (resolution_lookup.height or resolution_lookup.res_h or resolution_lookup[2])) or 1080
 	local screen_width = resolution_width / screen_scale
 	local screen_height = resolution_height / screen_scale
+	local horizontal_position = mod:get("distance_horizontal_position") or 0.5
+	local vertical_position = mod:get("distance_vertical_position") or 0.12
 	local screen_position = {
-		screen_width * 0.5,
-		screen_height * 0.12,
+		screen_width * horizontal_position,
+		screen_height * vertical_position,
 		10,
 	}
 
