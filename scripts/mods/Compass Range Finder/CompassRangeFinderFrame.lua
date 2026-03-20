@@ -58,7 +58,9 @@ UIFonts.get_font_options_by_style(font_style, text_options)
 text_options.shadow = true
 
 local frame_padding_x = 10
-local frame_padding_y = 4
+local frame_padding_top = 4
+local frame_padding_bottom = 7
+local text_width_buffer = 6
 local border_thickness = 2
 local outer_thickness = 1
 local inner_inset = 2
@@ -124,18 +126,20 @@ FrameRenderer.draw = function(ui_renderer, distance, color, screen_position)
 
 	apply_color_tint(color)
 
-	local text_width, text_height = UIRenderer.text_size(ui_renderer, distance_text, font_type, font_size)
-	local frame_width = math_max(text_width + frame_padding_x * 2, text_height + frame_padding_y * 2)
-	local frame_height = text_height + frame_padding_y * 2
+	local measured_text_width, measured_text_height = UIRenderer.text_size(ui_renderer, distance_text, font_type, font_size)
+	local text_width = math_ceil(measured_text_width) + text_width_buffer
+	local text_height = math_ceil(measured_text_height)
+	local frame_width = math_max(text_width + frame_padding_x * 2, text_height + frame_padding_top + frame_padding_bottom)
+	local frame_height = text_height + frame_padding_top + frame_padding_bottom
 	local frame_x = screen_position[1] - frame_width * 0.5
 	local frame_y = screen_position[2]
 	local frame_z = screen_position[3]
 
 	text_position[1] = frame_x + (frame_width - text_width) * 0.5
-	text_position[2] = frame_y + (frame_height - text_height) * 0.5
+	text_position[2] = frame_y + frame_padding_top
 	text_position[3] = screen_position[3] + 1
-	text_size[1] = math_max(text_width, 1)
-	text_size[2] = math_max(text_height, 1)
+	text_size[1] = math_max(frame_width - frame_padding_x * 2, 1)
+	text_size[2] = math_max(frame_height - frame_padding_top - frame_padding_bottom, 1)
 
 	local outer_x = frame_x - outer_thickness
 	local outer_y = frame_y - outer_thickness

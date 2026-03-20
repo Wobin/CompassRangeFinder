@@ -3,12 +3,12 @@ Title: Compass Range Finder
 Author: Wobin
 Date: 19/03/2026
 Repository: https://github.com/Wobin/CompassRangeFinder
-Version: 1.2.0
+Version: 1.2.1
 --]]
 
 local mod = get_mod("Compass Range Finder")
 
-mod.version = "1.2.0"
+mod.version = "1.2.1"
 
 mod:register_hud_element({
 	class_name = "HudElementCompassRangeFinder",

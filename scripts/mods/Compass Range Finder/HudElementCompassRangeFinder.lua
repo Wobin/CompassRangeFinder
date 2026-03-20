@@ -46,7 +46,6 @@ local function draw_distance_overlay(compass_element, ui_renderer, screen_positi
 
 	local slot_color = Color["player_slot_" .. target.slot]
 	local color = slot_color and slot_color(255, true) or Color.white(255, true)
-
 	FrameRenderer.draw(ui_renderer, math.floor(target.distance + 0.5), color, screen_position)
 end
 
@@ -78,7 +77,6 @@ HudElementCompassRangeFinder.draw = function(self, dt, t, ui_renderer, render_se
 
 	local compass_element = get_compass_element(self)
 	local expedition_active = Targeting.is_expedition_active(compass_element)
-
 	if expedition_active then
 		draw_distance_overlay(compass_element, ui_renderer, screen_position)
 	end
