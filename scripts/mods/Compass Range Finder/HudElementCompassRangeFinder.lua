@@ -6,6 +6,7 @@ local FrameRenderer = mod:io_dofile("Compass Range Finder/scripts/mods/Compass R
 local Targeting = mod:io_dofile("Compass Range Finder/scripts/mods/Compass Range Finder/CompassRangeFinderTargeting")
 local color_lib = Color
 local Unit = Unit
+local STANDARD_GREEN = { 255, 0, 255, 0 }
 
 local HudElementCompassRangeFinder = class("HudElementCompassRangeFinder", "HudElementBase")
 
@@ -26,15 +27,16 @@ local function get_compass_element(self)
 end
 
 
--- Helper: Calculate distance between two positions
 local function calculate_distance(pos1, pos2)
 	if not (pos1 and pos2 and pos1.x and pos2.x) then return nil end
 	local dx, dy, dz = pos1.x - pos2.x, pos1.y - pos2.y, pos1.z - pos2.z
 	return math.sqrt(dx * dx + dy * dy + dz * dz)
 end
 
--- Helper: Get color for a target slot
 local function get_target_color(target)
+	if target.is_unmarked_opportunity then
+		return STANDARD_GREEN
+	end
 	if target.slot and color_lib then
 		local slot_color = color_lib["player_slot_" .. target.slot]
 		if slot_color then
@@ -44,24 +46,45 @@ local function get_target_color(target)
 	return {255, 255, 255, 255}
 end
 
--- Helper: Collect all relevant targets
-local function collect_targets(compass_element)
+local function collect_targets(compass_element, hud_element)
 	local t1 = Targeting.get_marked_expedition_target(compass_element)
 	local t2 = Targeting.get_extra_opportunities_target(compass_element)
 	local targets = {}
+
 	if t1 then targets[#targets+1] = t1 end
 	if t2 then targets[#targets+1] = t2 end
+
+	if hud_element then
+		local current_marked_position = t1 and t1.position
+		
+		if current_marked_position ~= hud_element._last_marked_target_position then
+			if mod:get("show_closest_unmarked_opportunity") then
+				hud_element._cached_closest_unmarked = Targeting.get_closest_unmarked_opportunity(compass_element)
+			else
+				hud_element._cached_closest_unmarked = nil
+			end
+			hud_element._last_marked_target_position = current_marked_position
+		end
+		
+		local cached_unmarked = hud_element._cached_closest_unmarked
+		if cached_unmarked then
+			if not t1 or cached_unmarked.distance < t1.distance then
+				targets[#targets+1] = cached_unmarked
+			end
+		end
+	end
+
 	return targets
 end
 
-local function draw_distance_overlay(compass_element, ui_renderer, screen_position)
+local function draw_distance_overlay(compass_element, ui_renderer, screen_position, hud_element)
 	local player_angle_radians = compass_element:_get_camera_direction_angle()
 	if not player_angle_radians then return end
 
 	local player_direction_degree = math.deg(player_angle_radians)
 	local effective_rotation = -player_direction_degree
 	local angle_window = mod:get("distance_angle_window_degrees") or 10
-	local targets = collect_targets(compass_element)
+	local targets = collect_targets(compass_element, hud_element)
 	if #targets == 0 then return end
 
 	for i, target in ipairs(targets) do
@@ -94,6 +117,9 @@ end
 
 HudElementCompassRangeFinder.init = function(self, parent, draw_layer, start_scale)
 	HudElementCompassRangeFinder.super.init(self, parent, draw_layer, start_scale, definitions)
+	
+	self._last_marked_target_position = nil
+	self._cached_closest_unmarked = nil
 end
 
 HudElementCompassRangeFinder.draw = function(self, dt, t, ui_renderer, render_settings, input_service)
@@ -121,7 +147,7 @@ HudElementCompassRangeFinder.draw = function(self, dt, t, ui_renderer, render_se
 	local compass_element = get_compass_element(self)
 	local expedition_active = Targeting.is_expedition_active(compass_element)
 	if expedition_active then
-		draw_distance_overlay(compass_element, ui_renderer, screen_position)
+		draw_distance_overlay(compass_element, ui_renderer, screen_position, self)
 	end
 
 	UIRenderer.end_pass(ui_renderer)
