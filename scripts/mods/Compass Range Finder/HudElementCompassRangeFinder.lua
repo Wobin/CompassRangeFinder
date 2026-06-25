@@ -6,7 +6,16 @@ local FrameRenderer = mod:io_dofile("Compass Range Finder/scripts/mods/Compass R
 local Targeting = mod:io_dofile("Compass Range Finder/scripts/mods/Compass Range Finder/CompassRangeFinderTargeting")
 local color_lib = Color
 local Unit = Unit
+local Vector3 = rawget(_G, "Vector3")
 local STANDARD_GREEN = { 255, 0, 255, 0 }
+
+local function resolve_vector(v)
+	if not v then return nil end
+	if Vector3 and pcall(Vector3.length, v) then return v end
+	local ok, unboxed = pcall(function() return v:unbox() end)
+	if ok and unboxed and Vector3 and pcall(Vector3.length, unboxed) then return unboxed end
+	return nil
+end
 
 local HudElementCompassRangeFinder = class("HudElementCompassRangeFinder", "HudElementBase")
 
@@ -88,27 +97,30 @@ local function draw_distance_overlay(compass_element, ui_renderer, screen_positi
 	if #targets == 0 then return end
 
 	for i, target in ipairs(targets) do
-		local target_angle_radians = compass_element:_get_position_direction_angle(target.position)
-		if target_angle_radians then
-			local target_angle_degrees = math.deg(target_angle_radians)
-			local angle_delta = (target_angle_degrees - effective_rotation + 540) % 360 - 180
-			if math.abs(angle_delta) <= angle_window then
-				local color = get_target_color(target)
-				local entry_position = {
-					screen_position[1],
-					screen_position[2] + (i - 1) * 36,
-					screen_position[3],
-				}
-				local distance = target.distance
-				if not distance and compass_element and compass_element._my_player and target.position then
-					local player_unit = compass_element._my_player.player_unit
-					if player_unit and Unit and Unit.local_position then
-						local player_pos = Unit.local_position(player_unit, 1)
-						distance = calculate_distance(player_pos, target.position)
+		local position = resolve_vector(target.position)
+		if position then
+			local target_angle_radians = compass_element:_get_position_direction_angle(position)
+			if target_angle_radians then
+				local target_angle_degrees = math.deg(target_angle_radians)
+				local angle_delta = (target_angle_degrees - effective_rotation + 540) % 360 - 180
+				if math.abs(angle_delta) <= angle_window then
+					local color = get_target_color(target)
+					local entry_position = {
+						screen_position[1],
+						screen_position[2] + (i - 1) * 36,
+						screen_position[3],
+					}
+					local distance = target.distance
+					if not distance and compass_element and compass_element._my_player then
+						local player_unit = compass_element._my_player.player_unit
+						if player_unit and Unit and Unit.local_position then
+							local player_pos = Unit.local_position(player_unit, 1)
+							distance = calculate_distance(player_pos, position)
+						end
 					end
-				end
-				if distance then
-					FrameRenderer.draw(ui_renderer, math.floor(distance + 0.5), color, entry_position)
+					if distance then
+						FrameRenderer.draw(ui_renderer, math.floor(distance + 0.5), color, entry_position)
+					end
 				end
 			end
 		end
