@@ -145,7 +145,7 @@ Targeting.get_closest_unmarked_opportunity = function(compass_element)
 						if distance < closest_distance then
 							closest_distance = distance
 							closest_opportunity = {
-								position = position,
+								position = position_box,
 								distance = distance,
 								is_unmarked_opportunity = true,
 							}

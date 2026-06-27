@@ -42,6 +42,15 @@ local function calculate_distance(pos1, pos2)
 	return math.sqrt(dx * dx + dy * dy + dz * dz)
 end
 
+local function get_player_position(compass_element)
+	local player = compass_element and compass_element._my_player
+	local player_unit = player and player.player_unit
+	if player_unit and Unit and Unit.local_position then
+		return Unit.local_position(player_unit, 1)
+	end
+	return nil
+end
+
 local function get_target_color(target)
 	if target.is_unmarked_opportunity then
 		return STANDARD_GREEN
@@ -77,6 +86,11 @@ local function collect_targets(compass_element, hud_element)
 		
 		local cached_unmarked = hud_element._cached_closest_unmarked
 		if cached_unmarked then
+			local position = resolve_vector(cached_unmarked.position)
+			local player_pos = get_player_position(compass_element)
+			if position and player_pos then
+				cached_unmarked.distance = calculate_distance(player_pos, position) or cached_unmarked.distance
+			end
 			if not t1 or cached_unmarked.distance < t1.distance then
 				targets[#targets+1] = cached_unmarked
 			end
@@ -111,10 +125,9 @@ local function draw_distance_overlay(compass_element, ui_renderer, screen_positi
 						screen_position[3],
 					}
 					local distance = target.distance
-					if not distance and compass_element and compass_element._my_player then
-						local player_unit = compass_element._my_player.player_unit
-						if player_unit and Unit and Unit.local_position then
-							local player_pos = Unit.local_position(player_unit, 1)
+					if not distance then
+						local player_pos = get_player_position(compass_element)
+						if player_pos then
 							distance = calculate_distance(player_pos, position)
 						end
 					end
